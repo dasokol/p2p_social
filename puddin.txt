@@ -1,0 +1,1 @@
+inet 18.22.8.77/16 post 18.22.255.255 scope global dynamic enp7s0

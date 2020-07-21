@@ -1,0 +1,86 @@
+This is an explanation of our idea, presented at HackMIT, to create a social network without a 
+centralized server/database.  Think facebook, but without the cost of storing petabytes of data.
+
+What's important here is not the social network.  The social network is present only to demonstrate a
+real-world use.  The main takeaway we learned is that large-scale things can be done in a 
+decentralized way.
+
+How it works:
+It works a lot like BitTorrent.  It is a peer-to-peer network where each user simultaneously acts as
+server and client.  When a user makes a post, the post gets stored on several other users' computers.
+When a user searches for an existing post, the user queries other computers on the network for the
+post.  The network is set up using a distributed-hash-table-like data structure (DHT) to store posts
+across the network in a decentralized way.  This means that no one place contains all the posts.
+Each user stores a small amount of data, and other users that need that data can query for it.  Thus,
+no central database exists in the network; the network itself is its own database.
+
+How it really works (an in-depth description):
+The network of computers can be represented as a connected graph.  Each computer is a node on the
+graph.  Each node is designated as either a simple node (stores data) or a bootstrap node (stores 
+connection information for other parts of the graph).  Simple nodes (sn) in our example primarily 
+store posts.  Bootstrap nodes (bs) primarily store ip addresses.  The following python code concretely
+illustrates the concept of a node:
+
+class Node:
+	""" class for nodes """
+	#node's ip address
+	node_ip = 0
+	
+	#true if node is a bootstrap node
+	is_bs = False
+	
+	#list of bootstrap node ip addresses
+	bs_list	= []
+	
+	#list of simple node ip addresses, only bs nodes use this
+	sn_list = []
+	
+In addition, each node has a post function and a query function, which allow it to create or search
+for posts.  When a user makes a post, the user contacts the first node in its bs_list.  This bs node
+then hashes the post by its metadata (for simplicity, the poster's username and post number)
+to an index in its sn_list and sends the data to the sn at that index.  In order to reduce query 
+latency and to ensure enough backups of the post are created, we define a constant number of backups N.  
+These two steps are carried out N times to complete the post operation: 
+1. Contact first node in bs_list and move to node
+2. Hash post metadata and send it to the sn for storage
+
+The query operation similarly contacts the first bs node. Then that bs node hashes the query to get
+the index the post would have been stored at if it had traversed that bs.  If the post is there, the
+query is finished.  Otherwise, we move to the next bs node and repeat.  These three steps are carried
+out until either the queried post is found or every bs node on the graph is hit:
+1. Contact first node in bs_list and move to node
+2. Hash post and check the sn to see if the right data is there
+3. If data is there or this is the last bs node, we are done.  Otherwise we move to the next bs node
+
+Of course, more operations can trivially be added in order to achieve a more desirable social network.
+Here is a summary of our analysis of decentralizing the network:
+
+Pros:
+Saves companies money by eliminating a central server/database.
+Provides security by eliminating a central server/database.  It is more difficult to hack one million
+nodes than it is to hack one database with the same information.
+If there are enough nodes in the network, latency compared to having a central server will likely
+be reduced.  This is because all requests are spread across many computers, rather than just one 
+server.  The key assumption we are making is that this is something like facebook (with over one
+billion users).
+Reliability of the service increases.  Because the data is replicated N times across the network,
+it becomes highly improbable that the service will experience an outage or that users will not be able
+to find what they are looking for quickly.  Again, this assumes many nodes in the network (like 
+facebook), and that N is a high enough number.
+
+Cons:
+In reality, the graph is a disconnected graph.  Users will power off their computers sometimes, lose
+internet connection, block traffic, etc.  This can lead to failed data queries and increased latency.  
+As the number of nodes in the network rises, however, this is remedied because the probability of not
+having a connection to a node containing the desired data decreases substantially.  Setting N to a 
+larger number also remedies this.
+Users are getting screwed by having to become a database.  It is true that each user must now store
+data and also serve up that data.  However, it is important to remember how cheap storage has become
+and how much cheaper it will continue to become.  Also, the network's data is spread across the many
+nodes in the network, which means no user has to store too much.
+Overall, N times more data must be stored because the data is replicated N times.  However, since this
+data is spread over many nodes, it is not likely to be noticeably expensive for each user. Furthermore, 
+it is always a good idea to have backups of your data.
+
+Created by Nathan Moos, Hunter Sonn, Caleb Hess, and David Sokol at HackMIT, September 2016.
+For questions, email dasokol@umich.edu
