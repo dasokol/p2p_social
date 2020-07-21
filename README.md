@@ -24,7 +24,8 @@ connection information for other parts of the graph).  Simple nodes (sn) in our 
 store posts.  Bootstrap nodes (bs) primarily store ip addresses.  The following python code concretely
 illustrates the concept of a node:
 
-`class Node:
+```
+class Node:
 	""" class for nodes """
 	#node's ip address
 	node_ip = 0
@@ -36,7 +37,8 @@ illustrates the concept of a node:
 	bs_list	= []
 	
 	#list of simple node ip addresses, only bs nodes use this
-	sn_list = []`
+	sn_list = []
+```
 	
 In addition, each node has a post function and a query function, which allow it to create or search
 for posts.  When a user makes a post, the user contacts the first node in its bs_list.  This bs node
